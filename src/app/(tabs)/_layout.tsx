@@ -10,8 +10,6 @@ export default function TabsLayout() {
                 options={{
                     title: "Home",
                     headerTitleAlign: "center",
-                    tabBarActiveTintColor: "black",
-                    tabBarInactiveTintColor: "gray",
                     tabBarIcon: ({ color }) => (
                         <Entypo name="home" size={24} color={color} />
                     ),
@@ -22,8 +20,6 @@ export default function TabsLayout() {
                 options={{
                     title: "Friends",
                     headerTitleAlign: "center",
-                    tabBarActiveTintColor: "black",
-                    tabBarInactiveTintColor: "gray",
                     tabBarIcon: ({ color }) => (
                         <FontAwesome name="users" size={24} color={color} />
                     ),
@@ -34,8 +30,6 @@ export default function TabsLayout() {
                 options={{
                     title: "New Post",
                     headerTitleAlign: "center",
-                    tabBarActiveTintColor: "black",
-                    tabBarInactiveTintColor: "gray",
                     tabBarIcon: ({ color }) => (
                         <Entypo name="plus" size={24} color={color} />
                     ),
@@ -46,8 +40,6 @@ export default function TabsLayout() {
                 options={{
                     title: "Inbox",
                     headerTitleAlign: "center",
-                    tabBarActiveTintColor: "black",
-                    tabBarInactiveTintColor: "gray",
                     tabBarIcon: ({ color }) => (
                         <Entypo name="mail" size={24} color={color} />
                     ),
@@ -59,8 +51,6 @@ export default function TabsLayout() {
                 options={{
                     title: "Profile",
                     headerTitleAlign: "center",
-                    tabBarActiveTintColor: "black",
-                    tabBarInactiveTintColor: "gray",
                     tabBarIcon: ({ color }) => (
                         <FontAwesome name="user" size={24} color={color} />
                     ),
