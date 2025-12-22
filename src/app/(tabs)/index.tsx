@@ -1,9 +1,10 @@
+import PostListItems from '@/components/PostListItems';
 import { View, Text } from 'react-native'
 
 export default function HomeScreen() {
     return (
         <View>
-          <Text>Hello home!</Text>
+          <PostListItems />
         </View>
     );
 }

@@ -8,6 +8,7 @@ export default function TabsLayout() {
             <Tabs.Screen
                 name="index"
                 options={{
+                    headerShown: false,
                     title: "Home",
                     headerTitleAlign: "center",
                     tabBarIcon: ({ color }) => (
