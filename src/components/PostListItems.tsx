@@ -8,19 +8,48 @@ import {
   TouchableOpacity,
 } from "react-native";
 import FontAwesome from "@expo/vector-icons/FontAwesome";
+import { useCallback, useEffect } from "react";
 import { Post } from "@/types/types";
 
 type videoItemProps = {
-    postItem:Post
+  postItem: Post
+  isActive:boolean
   }
 
-export default function PostListItems({postItem}:videoItemProps) {
+export default function PostListItems({postItem,isActive}:videoItemProps) {
   const { height } = Dimensions.get("window");
 
-  const player = useVideoPlayer(postItem.video_url, (player) => {
+  const player = useVideoPlayer(postItem?.video_url, (player) => {
     player.loop = true;
     player.play();
   });
+
+  useEffect(
+    useCallback(() => {
+      if (!player) return;
+
+      try {
+        if (isActive) {
+          player.play();
+        } else {
+          player.pause(); 
+        }
+      } catch (error) {
+        console.error("Playback error:", error);
+      }
+      
+      return () => {
+        if (player) {
+          try {
+            player.pause();
+          } catch (error) {
+            console.error("Pause error:", error);
+          }
+        }
+      };
+    }, [player, isActive]), 
+  );
+  
 
   return (
     <View style={{ height: height - 70 }}>
@@ -37,7 +66,7 @@ export default function PostListItems({postItem}:videoItemProps) {
         >
           <FontAwesome name="heart" size={24} color="#ffffff" />
           <Text style={styles.interationText}>
-            {postItem.nrOfLikes[0]?.count}
+            {postItem?.nrOfLikes[0]?.count}
           </Text>
         </TouchableOpacity>
 
@@ -47,7 +76,7 @@ export default function PostListItems({postItem}:videoItemProps) {
         >
           <FontAwesome name="comment" size={24} color="#ffffff" />
           <Text style={styles.interationText}>
-            {postItem.nrOfComments[0].count}
+            {postItem?.nrOfComments[0]?.count}
           </Text>
         </TouchableOpacity>
 
@@ -56,28 +85,29 @@ export default function PostListItems({postItem}:videoItemProps) {
           onPress={() => console.log("Share pressed")}
         >
           <FontAwesome name="share" size={24} color="#ffffff" />
-          <Text style={styles.interationText}>{postItem.nrOfShares[0].count}</Text>
+          <Text style={styles.interationText}>{postItem?.nrOfShares[0]?.count}</Text>
         </TouchableOpacity>
 
         <TouchableOpacity
           style={styles.avatar}
           onPress={() => console.log("profile pressed")}
         >
-          <Text style={styles.avatarText}>{postItem.user.id}</Text>
+          <Text style={styles.avatarText}>{postItem?.user?.username?.charAt(0).toUpperCase()}</Text>
         </TouchableOpacity>
       </View>
       <View style={styles.videoInfo}>
-        <Text style={styles.username}>{postItem.user.username}</Text>
-        <Text style={styles.description}>{postItem.description}</Text>
+        <Text style={styles.username}>{postItem?.user?.username}</Text>
+        <Text style={styles.description}>{postItem?.description}</Text>
       </View>
     </View>
   );
 }
 
+
 const styles = StyleSheet.create({
   interactionBar: {
     position: "absolute",
-    right: 20,
+    right: 20, 
     bottom: 20,
     gap:25
   },

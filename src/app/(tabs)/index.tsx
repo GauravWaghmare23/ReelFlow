@@ -1,13 +1,97 @@
-import PostListItems from '@/components/PostListItems';
-import { View, Text, FlatList } from 'react-native';
+import PostListItems from "@/components/PostListItems";
+import { View, FlatList, Dimensions, ViewToken, TouchableOpacity, StyleSheet } from "react-native";
 import posts from "@assets/data/posts.json";
+import { useRef, useState } from "react";
+import Feather from "@expo/vector-icons/Feather";
+import FeedTab from "@/components/FeedTab";
 
 export default function HomeScreen() {
-    return (
-        <View>
-        <FlatList data={posts} renderItem={({ item }) => (
-          <PostListItems postItem={item} />
-          )} />
+  const [currentIndex, setCurrentIndex] = useState(0);
+  const { height } = Dimensions.get("window");
+  const Tabs = {
+    explore: "Explore",
+    following: "Following",
+    for_you:"For you"
+  }
+  const [activeTab, setActiveTab] = useState(Tabs.for_you)
+  
+
+
+  const viewabilityConfig = {
+    itemVisiblePercentThreshold: 50,
+    minimumViewTime: 100,
+  };
+
+  const onViewableItemsChanged = useRef(
+    ({ viewableItems }: { viewableItems: ViewToken[] }) => {
+      if (viewableItems.length > 0) {
+        setCurrentIndex(viewableItems[0].index || 0);
+      }
+    },
+  );
+
+  console.log(currentIndex)
+
+  return (
+    <View style={{ flex: 1 }}>
+      <View style={styles.topBar}>
+        <TouchableOpacity>
+          <Feather name="tv" size={24} color="white" />
+        </TouchableOpacity>
+        <View style={styles.navigationBar}>
+          <FeedTab
+            title={Tabs.explore}
+            setActiveTab={setActiveTab}
+            activeTab={activeTab}
+          />
+          <FeedTab
+            title={Tabs.following}
+            setActiveTab={setActiveTab}
+            activeTab={activeTab}
+          />
+          <FeedTab
+            title={Tabs.for_you}
+            setActiveTab={setActiveTab}
+            activeTab={activeTab}
+          />
         </View>
-    );
+        <TouchableOpacity>
+          <Feather name="search" size={24} color="white" />
+        </TouchableOpacity>
+      </View>
+      <FlatList
+        data={posts}
+        renderItem={({ item, index }) => (
+          <PostListItems postItem={item} isActive={index === currentIndex} />
+        )}
+        initialNumToRender={4}
+        maxToRenderPerBatch={4}
+        windowSize={5}
+        removeClippedSubviews
+        keyExtractor={(item, index) => index.toString()}
+        showsVerticalScrollIndicator={false}
+        snapToInterval={height - 70}
+        decelerationRate={"fast"}
+        viewabilityConfig={viewabilityConfig}
+        onViewableItemsChanged={onViewableItemsChanged.current}
+      />
+    </View>
+  );
 }
+
+
+const styles = StyleSheet.create({
+  topBar: {
+    flexDirection: "row",
+    position: "absolute",
+    zIndex: 10,
+    top: 50,
+    paddingHorizontal:20
+  },
+  navigationBar: {
+    flexDirection: "row",
+    flex: 1,
+    justifyContent: "center",
+    gap:30
+  }
+})
