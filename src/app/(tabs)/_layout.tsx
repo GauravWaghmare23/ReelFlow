@@ -1,6 +1,11 @@
 import { Tabs } from "expo-router";
 import Entypo from "@expo/vector-icons/Entypo";
 import FontAwesome from "@expo/vector-icons/FontAwesome";
+import { LogBox } from "react-native";
+
+LogBox.ignoreAllLogs();
+
+
 
 export default function TabsLayout() {
     return (
@@ -29,6 +34,7 @@ export default function TabsLayout() {
             <Tabs.Screen
                 name="newPost"
                 options={{
+                    headerShown:false,
                     title: "New Post",
                     headerTitleAlign: "center",
                     tabBarIcon: ({ color }) => (

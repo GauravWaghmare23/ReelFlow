@@ -44,6 +44,12 @@
           "microphonePermission": "Allow ReelFlow to access your microphone",
           "recordAudioAndroid": true
         }
+      ],
+      [
+        "expo-image-picker",
+        {
+          "photosPermission": "ReelFlow accesses your photos to let you share them with your friends."
+        }
       ]
     ]
   }

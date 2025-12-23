@@ -32,14 +32,14 @@ export default function PostListItems({postItem,isActive}:videoItemProps) {
         if (isActive) {
           player.play();
         } else {
-          player.pause(); 
+          player.pause()
         }
       } catch (error) {
         console.error("Playback error:", error);
       }
       
       return () => {
-        if (player) {
+        if (player && !isActive) {
           try {
             player.pause();
           } catch (error) {
@@ -108,7 +108,7 @@ const styles = StyleSheet.create({
   interactionBar: {
     position: "absolute",
     right: 20, 
-    bottom: 20,
+    bottom: 50,
     gap:25
   },
   interactionItem: {
@@ -142,9 +142,11 @@ const styles = StyleSheet.create({
   username: {
     fontSize: 20,
     fontWeight: "600",
-    color:"#ffffff"
+    color: "#ffffff",
+    bottom:30
   },
   description: {
-    color:"#ffffff"
+    color: "#ffffff",
+    bottom:30
   }
 });
