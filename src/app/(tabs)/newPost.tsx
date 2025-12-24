@@ -8,6 +8,8 @@ import {
   TextInput,
   Alert,
   LogBox,
+  Platform,
+  KeyboardAvoidingView,
 } from "react-native";
 import {
   CameraView,
@@ -21,7 +23,6 @@ import MaterialIcons from "@expo/vector-icons/MaterialIcons";
 import { useVideoPlayer, VideoView } from "expo-video";
 import * as ImagePicker from "expo-image-picker";
 
-// optional: silence noisy warnings in dev
 LogBox.ignoreAllLogs();
 
 export default function NewPostScreen() {
@@ -33,12 +34,10 @@ export default function NewPostScreen() {
   const [videoUri, setVideoUri] = useState<string | null>(null);
   const [description, setDescription] = useState("");
 
-  // single player with nullable source
   const player = useVideoPlayer(videoUri ? { uri: videoUri } : null, (p) => {
     p.loop = true;
   });
 
-  // start / stop playback when uri changes
   useEffect(() => {
     const run = async () => {
       try {
@@ -54,7 +53,6 @@ export default function NewPostScreen() {
     run();
   }, [videoUri, player]);
 
-  // camera + mic permissions
   useEffect(() => {
     if (
       (permission && !permission.granted && permission.canAskAgain) ||
@@ -63,10 +61,10 @@ export default function NewPostScreen() {
       requestPermission();
       requestMicPermission();
     }
-  }, [permission, micPermission]);
+  }, [permission, micPermission, requestPermission, requestMicPermission]);
 
   if (!permission || !micPermission) {
-    return <View />;
+    return <View style={styles.container} />;
   }
 
   if (
@@ -93,7 +91,6 @@ export default function NewPostScreen() {
   const toggleCameraFacing = () =>
     setFacing((current) => (current === "back" ? "front" : "back"));
 
-  // pick video from gallery
   const selectFrontGallery = async () => {
     try {
       const perm = await ImagePicker.requestMediaLibraryPermissionsAsync();
@@ -150,7 +147,7 @@ export default function NewPostScreen() {
   };
 
   const renderCamera = () => (
-    <View style={{ flex: 1, backgroundColor: "black" }}>
+    <View style={styles.cameraContainer}>
       {isRecording && <Text style={styles.recordingText}>recording</Text>}
 
       <View style={styles.topBar}>
@@ -160,7 +157,7 @@ export default function NewPostScreen() {
       <CameraView
         mode="video"
         ref={cameraRef}
-        style={{ flex: 1 }}
+        style={StyleSheet.absoluteFill}
         facing={facing}
       />
 
@@ -188,7 +185,7 @@ export default function NewPostScreen() {
   );
 
   const renderRecordedVideo = () => (
-    <View style={{ flex: 1, backgroundColor: "black" }}>
+    <View style={styles.mainContainer}>
       <TouchableOpacity style={styles.closeIcon} onPress={dismissVideo}>
         <MaterialIcons name="cancel" size={30} color="white" />
       </TouchableOpacity>
@@ -202,34 +199,41 @@ export default function NewPostScreen() {
         />
       )}
 
-      <TextInput
-        style={styles.input}
-        placeholder="Enter the description..."
-        placeholderTextColor="#aaaaaa"
-        multiline
-        value={description}
-        onChangeText={setDescription}
-      />
-      <View style={{ padding: 16 }}>
-        <TouchableOpacity
-          style={{
-            backgroundColor: "#ff3b5c",
-            paddingVertical: 10,
-            borderRadius: 24,
-            alignItems: "center",
-          }}
-          onPress={() => console.log("Post button pressed", { videoUri, description })}
-        >
-          <Text style={{ color: "#fff", fontWeight: "600" }}>Post</Text>
-        </TouchableOpacity>
-      </View>
+      <KeyboardAvoidingView
+        style={styles.bottomContainer}
+        behavior={Platform.OS === "ios" ? "padding" : "height"}
+        keyboardVerticalOffset={Platform.OS === "ios" ? 0 : 20}
+      >
+        <TextInput
+          style={styles.input}
+          placeholder="Enter the description..."
+          placeholderTextColor="#aaaaaa"
+          multiline
+          value={description}
+          onChangeText={setDescription}
+        />
+        <View style={styles.postButtonContainer}>
+          <TouchableOpacity
+            style={styles.postButton}
+            onPress={() =>
+              console.log("Post button pressed", { videoUri, description })
+            }
+          >
+            <Text style={styles.postButtonText}>Post</Text>
+          </TouchableOpacity>
+        </View>
+      </KeyboardAvoidingView>
     </View>
   );
 
-  return <>{videoUri ? renderRecordedVideo() : renderCamera()}</>;
+  return videoUri ? renderRecordedVideo() : renderCamera();
 }
 
 const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+    backgroundColor: "black",
+  },
   permissionText: {
     color: "#ffffff",
     textAlign: "center",
@@ -237,9 +241,9 @@ const styles = StyleSheet.create({
     fontWeight: "600",
   },
   PermissionButton: {
-    backgroundColor: "gray",
+    backgroundColor: "#ff3b5c",
     width: 150,
-    height: 30,
+    height: 40,
     alignItems: "center",
     justifyContent: "center",
     borderRadius: 10,
@@ -249,6 +253,14 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "center",
     gap: 30,
+    backgroundColor: "black",
+  },
+  cameraContainer: {
+    flex: 1,
+    backgroundColor: "black",
+  },
+  mainContainer: {
+    flex: 1,
     backgroundColor: "black",
   },
   recordButton: {
@@ -288,6 +300,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 20,
     gap: 90,
     alignItems: "center",
+    width: "100%",
   },
   closeIcon: {
     position: "absolute",
@@ -299,6 +312,13 @@ const styles = StyleSheet.create({
     flex: 1,
     marginTop: 80,
   },
+  bottomContainer: {
+    position: "absolute",
+    bottom: 0,
+    left: 0,
+    right: 0,
+    backgroundColor: "rgba(0,0,0,0.8)",
+  },
   input: {
     minHeight: 80,
     paddingHorizontal: 16,
@@ -306,5 +326,19 @@ const styles = StyleSheet.create({
     color: "white",
     borderTopWidth: 1,
     borderTopColor: "#333",
+  },
+  postButtonContainer: {
+    padding: 16,
+  },
+  postButton: {
+    backgroundColor: "#ff3b5c",
+    paddingVertical: 12,
+    borderRadius: 24,
+    alignItems: "center",
+  },
+  postButtonText: {
+    color: "#fff",
+    fontWeight: "600",
+    fontSize: 16,
   },
 });
