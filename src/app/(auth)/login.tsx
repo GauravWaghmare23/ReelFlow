@@ -1,6 +1,9 @@
+import { useAuthStore } from "@/store/useAuthStore";
 import { Link } from "expo-router";
 import { useState } from "react";
 import {
+  Alert,
+  KeyboardAvoidingView,
   StyleSheet,
   Text,
   TextInput,
@@ -8,11 +11,32 @@ import {
   View,
 } from "react-native";
 
+
 export default function LoginScreen() {
   const [email, setEmail] = useState<string>("");
   const [password, setPassword] = useState<string>("");
+  const [loading, setLoading] = useState<boolean>(false);
+  const login = useAuthStore((state) => state.login);
+
+  const handleLogin = async () => {
+    try {
+      if (!email || !password) {
+        Alert.alert("Error :", "Please enter email and password");
+        return;
+      }
+      setLoading(true);
+      await login(email, password);
+      setLoading(false);
+    } catch (error) {
+      Alert.alert("Error :", "Login failed, Please try again later.");
+      return;
+    } finally {
+      setLoading(false);
+    }
+  };
+
   return (
-    <View style={styles.container}>
+    <KeyboardAvoidingView style={styles.container}>
       <Text style={styles.title}>Welcome Back!</Text>
       <Text style={styles.subTitle}>Sign in to your account</Text>
       <TextInput
@@ -31,17 +55,17 @@ export default function LoginScreen() {
         onChangeText={setPassword}
         secureTextEntry
       />
-      <TouchableOpacity style={styles.button}>
-        <Text style={styles.buttonText}>Login</Text>
+      <TouchableOpacity style={loading ? styles.loading : styles.button} onPress={handleLogin} disabled={loading}>
+              <Text style={styles.buttonText}>{loading ? "Loading..." : "Sign In"}</Text>
       </TouchableOpacity>
 
       <View style={styles.linkView}>
         <Text style={styles.bottomText}>Don't have an account?</Text>
         <Link href={"/register"}>
-          <Text style={styles.linkText}>Register</Text>
+          <Text style={styles.linkText}>Sign Up</Text>
         </Link>
       </View>
-    </View>
+    </KeyboardAvoidingView>
   );
 }
 
@@ -77,28 +101,36 @@ const styles = StyleSheet.create({
     borderRadius: 15,
     alignItems: "center",
     justifyContent: "center",
-      marginTop: 5,
-    marginBottom:35
+    marginTop: 5,
+    marginBottom: 35,
   },
   buttonText: {
     color: "#ffffff",
     fontSize: 15,
     fontWeight: "600",
-    
   },
-    bottomText: {
-        color: "#999999",
-        textAlign: "center",
-        fontSize: 15
+  bottomText: {
+    color: "#999999",
+    textAlign: "center",
+    fontSize: 15,
   },
-    linkText: {
-        color: "#ffffff",
-        textAlign: "center",
-        fontSize: 15
-    },
-    linkView: {
-        flexDirection: "row",
-        justifyContent: "center",
-        gap:5
-    }
+  linkText: {
+    color: "#ffffff",
+    textAlign: "center",
+    fontSize: 15,
+  },
+  linkView: {
+    flexDirection: "row",
+    justifyContent: "center",
+    gap: 5,
+  },
+  loading: {
+    backgroundColor: "#999999",
+    padding: 13,
+    borderRadius: 15,
+    alignItems: "center",
+    justifyContent: "center",
+    marginTop: 5,
+    marginBottom: 35,
+  },
 });
