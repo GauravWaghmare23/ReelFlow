@@ -6,17 +6,26 @@ import {
   ViewToken,
   TouchableOpacity,
   StyleSheet,
+  ActivityIndicator,
+  Text,
+  RefreshControl,
 } from "react-native";
-import posts from "@assets/data/posts.json";
 import { useRef, useState } from "react";
 import Feather from "@expo/vector-icons/Feather";
 import FeedTab from "@/components/FeedTab";
 import { useIsFocused } from "@react-navigation/native";
+import { useQuery } from "@tanstack/react-query";
+import { fetchPosts } from "@/services/posts";
 
 export default function HomeScreen() {
   const [currentIndex, setCurrentIndex] = useState(0);
   const { height } = Dimensions.get("window");
   const isFocused = useIsFocused();
+
+  const { data, isLoading, isError, refetch } = useQuery({
+    queryKey: ["posts"],
+    queryFn: fetchPosts,
+  });
 
   const Tabs = {
     explore: "Explore",
@@ -35,14 +44,37 @@ export default function HomeScreen() {
       if (viewableItems.length > 0 && viewableItems[0].index != null) {
         setCurrentIndex(viewableItems[0].index);
       }
-    },
+    }
   );
+
+  const handleRefresh = () => {
+    refetch();
+  };
+
+  if (isLoading) {
+    return (
+      <ActivityIndicator
+        size={"large"}
+        style={{ flex: 1, alignItems: "center", justifyContent: "center" }}
+      />
+    );
+  }
+
+  if (isError) {
+    return (
+      <View style={{ flex: 1, alignItems: "center", justifyContent: "center" }}>
+        <Text style={{ color: "red" }}>
+          Error Occured while fetching post request
+        </Text>
+      </View>
+    );
+  }
 
   return (
     <View style={{ flex: 1 }}>
       <View style={styles.topBar}>
-        <TouchableOpacity>
-          <Feather name="tv" size={24} color="white" />
+        <TouchableOpacity onPress={handleRefresh}>
+          <Feather name="refresh-cw" size={24} color="white" />
         </TouchableOpacity>
 
         <View style={styles.navigationBar}>
@@ -69,7 +101,7 @@ export default function HomeScreen() {
       </View>
 
       <FlatList
-        data={posts}
+        data={data || []}
         renderItem={({ item, index }) => (
           <PostListItems
             postItem={item}
@@ -86,6 +118,9 @@ export default function HomeScreen() {
         decelerationRate="fast"
         viewabilityConfig={viewabilityConfig}
         onViewableItemsChanged={onViewableItemsChanged.current}
+        refreshControl={
+          <RefreshControl refreshing={isLoading} onRefresh={handleRefresh} />
+        }
       />
     </View>
   );

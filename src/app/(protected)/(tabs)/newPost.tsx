@@ -22,10 +22,16 @@ import FontAwesome6 from "@expo/vector-icons/FontAwesome6";
 import MaterialIcons from "@expo/vector-icons/MaterialIcons";
 import { useVideoPlayer, VideoView } from "expo-video";
 import * as ImagePicker from "expo-image-picker";
+import { useAuthStore } from "@/store/useAuthStore";
+import { useMutation } from "@tanstack/react-query";
+import { useQueryClient } from "@tanstack/react-query";
+import * as FileSystem from "expo-file-system/legacy";
+import { createPost, uploadVideoToStorage } from "@/services/posts";
 
 LogBox.ignoreAllLogs();
 
 export default function NewPostScreen() {
+  const queryClient = useQueryClient();
   const [facing, setFacing] = useState<CameraType>("back");
   const [permission, requestPermission] = useCameraPermissions();
   const [micPermission, requestMicPermission] = useMicrophonePermissions();
@@ -33,18 +39,70 @@ export default function NewPostScreen() {
   const cameraRef = useRef<CameraView | null>(null);
   const [videoUri, setVideoUri] = useState<string | null>(null);
   const [description, setDescription] = useState("");
+  const user = useAuthStore((state) => state.user);
 
   const player = useVideoPlayer(videoUri ? { uri: videoUri } : null, (p) => {
     p.loop = true;
+  });
+
+  const { mutate: createNewPost, isPending } = useMutation({
+    mutationFn: async ({
+      videoUri,
+      description,
+    }: {
+      videoUri: string;
+      description: string;
+    }) => {
+      if (!user) throw new Error("User not authenticated");
+
+      const fileExtension = videoUri.split(".").pop() || "mp4";
+      const fileName = `${user.id}/${Date.now()}.${fileExtension}`;
+
+      const base64 = await FileSystem.readAsStringAsync(videoUri, {
+        encoding: FileSystem.EncodingType.Base64,
+      });
+
+      const byteCharacters = atob(base64);
+      const byteNumbers = new Array(byteCharacters.length);
+      for (let i = 0; i < byteCharacters.length; i++) {
+        byteNumbers[i] = byteCharacters.charCodeAt(i);
+      }
+      const fileBuffer = new Uint8Array(byteNumbers);
+
+      const videoUrl = await uploadVideoToStorage({
+        fileName,
+        fileExtension,
+        fileBuffer,
+      });
+
+      await createPost({
+        video_url: videoUrl,
+        description: description,
+        user_id: user.id,
+      });
+    },
+    onSuccess: () => {
+      player.release();
+      setDescription("");
+      setVideoUri(null);
+      queryClient.invalidateQueries({ queryKey: ["posts"] });
+    },
+    onError: (error: any) => {
+      console.error("Post error:", error);
+      Alert.alert(
+        "Error",
+        `Failed to create post: ${error.message || "Unknown error"}`
+      );
+    },
   });
 
   useEffect(() => {
     const run = async () => {
       try {
         if (videoUri) {
-          await player.play();
+          player.play();
         } else {
-          await player.pause();
+          player.pause();
         }
       } catch (e) {
         console.log("play/pause error", e);
@@ -97,7 +155,7 @@ export default function NewPostScreen() {
       if (!perm.granted) {
         Alert.alert(
           "Permission required",
-          "Permission to access the media library is required.",
+          "Permission to access the media library is required."
         );
         return;
       }
@@ -144,6 +202,16 @@ export default function NewPostScreen() {
   const dismissVideo = () => {
     setVideoUri(null);
     setDescription("");
+  };
+
+  const handlePostVideo = () => {
+    if (!videoUri) {
+      Alert.alert("Error", "Please select or record a video first");
+      return;
+    }
+    if (isPending) return;
+
+    createNewPost({ videoUri: videoUri!, description });
   };
 
   const renderCamera = () => (
@@ -214,12 +282,13 @@ export default function NewPostScreen() {
         />
         <View style={styles.postButtonContainer}>
           <TouchableOpacity
-            style={styles.postButton}
-            onPress={() =>
-              console.log("Post button pressed", { videoUri, description })
-            }
+            style={[styles.postButton, isPending && styles.postButtonDisabled]}
+            onPress={handlePostVideo}
+            disabled={isPending}
           >
-            <Text style={styles.postButtonText}>Post</Text>
+            <Text style={styles.postButtonText}>
+              {isPending ? "Posting..." : "Post"}
+            </Text>
           </TouchableOpacity>
         </View>
       </KeyboardAvoidingView>
@@ -335,6 +404,9 @@ const styles = StyleSheet.create({
     paddingVertical: 12,
     borderRadius: 24,
     alignItems: "center",
+  },
+  postButtonDisabled: {
+    backgroundColor: "#666",
   },
   postButtonText: {
     color: "#fff",
